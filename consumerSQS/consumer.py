@@ -4,11 +4,20 @@ from config import config
 import answer
 import json
 import time
+import librarian
 
 def work(message):
     message = json.loads(message)
     print(type(message))
     print(message)
+    return sendToManager(message)
+
+def sendToManager(message):
+    um = librarian.User_manager(message["entry"][0]["messaging"][0]["sender"]["id"])
+    um.user_event("MESSAGE",str(message["entry"][0]["messaging"][0]["message"]["text"]))
+    return True
+
+def parrot_work(message):
     try :
         msgToSend = "I ear your request :"+str(message["entry"][0]["messaging"][0]["message"]["text"])
         idReceiver = message["entry"][0]["messaging"][0]["sender"]["id"]

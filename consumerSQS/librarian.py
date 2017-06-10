@@ -53,23 +53,34 @@ class User_manager():
         return user_state
 
     def user_event(self,event,payload):
-        if self.user_state.state is None:
-            self.ask_credentials()
-            self.user_state.state = "CREDENTIALS WAITING"
-        elif "CREDENTIALS WAITING" in self.user_state.state :
-            self.verify_credentials(payload)
-        self.build_user_file(self.user_state)
+
+        try:
+            if self.user_state.state is None:
+                self.ask_credentials()
+                self.user_state.state = "CREDENTIALS WAITING"
+            elif "CREDENTIALS WAITING" in self.user_state.state :
+                self.verify_credentials(payload)
+                answer.send_message("Hey everything is setup !",self.userId)
+                self.user_state.state = "SET UP COMPLETED"
+            self.build_user_file(self.user_state)
+        except Exception as e:
+            print(e)
+            answer.send_message("Outch !",self.userId)
+            answer.send_message("Something gone wrong",self.userId)
+            answer.send_message("I will keep you informed",self.userId)
+            self.user_state.state = None
+            self.build_user_file(self.user_state)
 
 
     def ask_credentials(self):
-        self.flow = OAuth2WebServerFlow(*oauth)
-        auth_uri = self.flow.step1_get_authorize_url()
+        self.user_state.flow = OAuth2WebServerFlow(*oauth)
+        auth_uri = self.user_state.flow.step1_get_authorize_url()
         answer.send_message("Please follow the link and paste the code back to me !",self.userId)
         answer.send_message(auth_uri,self.userId)
         return
     def verify_credentials(self,code):
-        credentials = self.flow.step2_exchange(code)
+        credentials = self.user_state.flow.step2_exchange(code)
         storage = oauth2client.file.Storage(self.folder_path+"oauth.cred")
         storage.put(credentials)
-        mm=Musicmanager()
-        mm.login(oauth_credentials = self.folder_path+"oauth.cred")
+        self.user_state.mm=Musicmanager()
+        self.user_state.mm.login(oauth_credentials = self.folder_path+"oauth.cred")
