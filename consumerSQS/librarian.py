@@ -38,35 +38,38 @@ class User_manager():
         self.folder_path = config["library_path"]+str(userId)+"/"
         try:
             os.mkdir(self.folder_path)
-            self.user_state = User_state()
+            self.user_state = User_state(userId)
         except Exception as e:
-            self.user_state = reconstruct_user_state(self.userId)
-
-    def build_user_file(user_state):
+            try:
+                self.user_state = self.reconstruct_user_state(self.userId)
+            except Exception as e:
+                print("USER NOT FOUND, SHOULD NOT HAPPEN")
+                self.user_state = User_state(userId)
+    def build_user_file(self,user_state):
         pickle.dump(user_state, open(self.folder_path+"state.p","wb"))
         return True
-    def reconstruct_user_state(userId):
+    def reconstruct_user_state(self,userId):
         user_state = pickle.load(open(self.folder_path+"state.p", 'rb'))
         return user_state
 
-    def user_event(event,payload):
-        if self.user_state.state = None:
-            ask_credentials()
+    def user_event(self,event,payload):
+        if self.user_state.state is None:
+            self.ask_credentials()
             self.user_state.state = "CREDENTIALS WAITING"
-        if self.user_state.state = "CREDENTIALS WAITING"
-            verify_credentials(payload)
+        elif "CREDENTIALS WAITING" in self.user_state.state :
+            self.verify_credentials(payload)
+        self.build_user_file(self.user_state)
 
 
-
-    def ask_credentials():
-        flow = OAuth2WebServerFlow(*oauth)
-        auth_uri = flow.step1_get_authorize_url()
+    def ask_credentials(self):
+        self.flow = OAuth2WebServerFlow(*oauth)
+        auth_uri = self.flow.step1_get_authorize_url()
         answer.send_message("Please follow the link and paste the code back to me !",self.userId)
         answer.send_message(auth_uri,self.userId)
         return
-    def verify_credentials(code):
-        credentials = flow.step2_exchange(code)
+    def verify_credentials(self,code):
+        credentials = self.flow.step2_exchange(code)
         storage = oauth2client.file.Storage(self.folder_path+"oauth.cred")
         storage.put(credentials)
         mm=Musicmanager()
-        mm.perform_oauth(storage_filepath = folder_path+"oauth.cred")
+        mm.login(oauth_credentials = self.folder_path+"oauth.cred")
