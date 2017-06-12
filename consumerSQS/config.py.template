@@ -1,0 +1,6 @@
+config = {
+	"tokenFacebook":"",
+	"access_key" : "",
+	"secret_access_key" : "",
+        "library_path": ""
+}
