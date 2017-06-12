@@ -14,6 +14,8 @@ import answer
 import urllib
 import pickle
 import re
+import time
+
 
 OAuthInfo = namedtuple('OAuthInfo', 'client_id client_secret scope redirect')
 oauth = OAuthInfo(
@@ -29,7 +31,9 @@ class User_state():
         self.state = None
         self.queue = []
         self.metadataState = None
-
+        self.count = 0
+        self.creationTimestamp = time.time()
+        self.lastInteractionTimestamp = time.time() 
 class User_manager():
 
     userId = None
@@ -46,12 +50,17 @@ class User_manager():
                 self.user_state = self.reconstruct_user_state(self.userId)
             except Exception as e:
                 print("USER NOT FOUND, SHOULD NOT HAPPEN")
+                print("Recover to be done")
                 self.user_state = User_state(userId)
     def build_user_file(self,user_state):
+        user_state.lastInteractionTimestamp = time.time() 
         pickle.dump(user_state, open(self.folder_path+"state.p","wb"))
         return True
     def reconstruct_user_state(self,userId):
         user_state = pickle.load(open(self.folder_path+"state.p", 'rb'))
+        if not hasattr(user_state, 'count'):
+            user_state.count = 0 
+
         return user_state
 
     def user_event(self,event,payload):
@@ -66,6 +75,7 @@ class User_manager():
                 self.user_state.state = "SET UP COMPLETED"
             elif "SET UP COMPLETED" in self.user_state.state :
                 self.process_url(payload)
+                self.user_state.count += 1
                 answer.send_message("Hey niceJob !!",self.userId)
             self.build_user_file(self.user_state)
         except Exception as e:
@@ -114,7 +124,14 @@ class User_manager():
         self.user_state.flow = OAuth2WebServerFlow(*oauth)
         auth_uri = self.user_state.flow.step1_get_authorize_url()
         answer.send_message("Please follow the link and paste the code back to me !",self.userId)
-        answer.send_message(auth_uri,self.userId)
+        try:
+            tiny_url = subprocess.check_output(["curl","http://tinyurl.com/api-create.php?url="+str(auth_uri)+ "'"])
+            answer.send_message(tiny_url.decode("utf-8"),self.userId)
+            answer.send_message("Psst, its a tiny URL, dont freakout, its Google behind",self.userId)
+        except Exception as e:
+            print(e)
+            print("\n")
+            answer.send_message(auth_uri,self.userId)
         return
     def verify_credentials(self,code):
         credentials = self.user_state.flow.step2_exchange(code)

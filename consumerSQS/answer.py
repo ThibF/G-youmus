@@ -8,5 +8,5 @@ def send_message(txt,userId):
     request=curlCommand.substitute(userId=userId,msg=txt,token=config["tokenFacebook"])
     logging.debug(request)
     #print(request)
-    subprocess.check_call(request,shell=True)
+    subprocess.check_call(request,shell=True,stderr=subprocess.STDOUT)
 
