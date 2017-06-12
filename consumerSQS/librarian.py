@@ -66,8 +66,7 @@ class User_manager():
                 self.user_state.state = "SET UP COMPLETED"
             elif "SET UP COMPLETED" in self.user_state.state :
                 self.process_url(payload)
-                self.user_state.state = "PROCESSING LINK"
-
+                answer.send_message("Hey niceJob !!",self.userId)
             self.build_user_file(self.user_state)
         except Exception as e:
             print(e)
