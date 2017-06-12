@@ -37,12 +37,11 @@ sqs = boto3.resource('sqs',aws_access_key_id = config["access_key"], aws_secret_
 while True:
     queue = sqs.get_queue_by_name(QueueName='MessagesYouMus.fifo')
     for msg in queue.receive_messages():
-        status = work(json.loads(msg.body))
-        if status:
+        try:
+            status = work(json.loads(msg.body))
             msg.delete()
-        else:
-            msg.delete()
-    print("no msg, going to sleep")
-    time.sleep(3)
+        except:
+            pass
+    time.sleep(0.2)
 
 
