@@ -14,7 +14,11 @@ def work(message):
 
 def sendToManager(message):
     um = librarian.User_manager(message["entry"][0]["messaging"][0]["sender"]["id"])
-    um.user_event("MESSAGE",str(message["entry"][0]["messaging"][0]["message"]["text"]))
+    try:
+        um.user_event("MESSAGE",str(message["entry"][0]["messaging"][0]["message"]["text"]))
+    except Exception as e:
+        print(e)
+        um.user_event("MESSAGE",str(message["entry"][0]["messaging"][0]["message"]["attachments"][0]["url"]))
     return True
 
 def parrot_work(message):

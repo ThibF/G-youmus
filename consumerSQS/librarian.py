@@ -13,6 +13,7 @@ from collections import namedtuple
 import answer
 import urllib
 import pickle
+import re
 
 OAuthInfo = namedtuple('OAuthInfo', 'client_id client_secret scope redirect')
 oauth = OAuthInfo(
@@ -33,6 +34,7 @@ class User_manager():
 
     userId = None
     user_state = None
+    folder_path = None 
     def __init__(self,userId):
         self.userId = userId
         self.folder_path = config["library_path"]+str(userId)+"/"
@@ -62,6 +64,10 @@ class User_manager():
                 self.verify_credentials(payload)
                 answer.send_message("Hey everything is setup !",self.userId)
                 self.user_state.state = "SET UP COMPLETED"
+            elif "SET UP COMPLETED" in self.user_state.state :
+                self.process_url(payload)
+                self.user_state.state = "PROCESSING LINK"
+
             self.build_user_file(self.user_state)
         except Exception as e:
             print(e)
@@ -71,6 +77,39 @@ class User_manager():
             self.user_state.state = None
             self.build_user_file(self.user_state)
 
+    def process_url(self, url):
+        fb_redirection = subprocess.check_output(["curl",url])
+        print(fb_redirection.decode('ascii'))
+        p = re.compile('watch\?v=(.{11})\"')
+        uid = p.search(fb_redirection.decode('ascii')).group(1)
+        print(uid)
+        command=["youtube-dl"]
+        command.append("--add-metadata")
+        command.append("--extract-audio")
+        command.append("--audio-format")
+        command.append("mp3")
+        command.append("-o")
+        command.append(self.folder_path+"/%(title)s.%(ext)s")
+        command.append(uid)
+        subprocess.check_call(command)
+        files=glob.glob(self.folder_path+"/*.mp3")
+        for music in files:
+            try:
+                mm=Musicmanager()
+                mm.login(oauth_credentials = self.folder_path+"oauth.cred")
+                code=mm.upload(music)
+                print(code)
+                if len(code[0])==1:
+                    try:
+                        os.remove(music)
+                    except OSError:
+                        pass
+            except TypeError as e:
+                print(e)
+                try:
+                    mm.login()
+                except gmusicapi.exceptions.AlreadyLoggedIn as e:
+                    pass
 
     def ask_credentials(self):
         self.user_state.flow = OAuth2WebServerFlow(*oauth)
@@ -82,5 +121,5 @@ class User_manager():
         credentials = self.user_state.flow.step2_exchange(code)
         storage = oauth2client.file.Storage(self.folder_path+"oauth.cred")
         storage.put(credentials)
-        self.user_state.mm=Musicmanager()
-        self.user_state.mm.login(oauth_credentials = self.folder_path+"oauth.cred")
+        mm=Musicmanager()
+        mm.login(oauth_credentials = self.folder_path+"oauth.cred")
