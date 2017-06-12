@@ -36,6 +36,7 @@ class User_state():
         self.lastInteractionTimestamp = time.time() 
 class User_manager():
 
+    isTinyURL = False
     userId = None
     user_state = None
     folder_path = None 
@@ -125,13 +126,13 @@ class User_manager():
         auth_uri = self.user_state.flow.step1_get_authorize_url()
         answer.send_message("Please follow the link and paste the code back to me !",self.userId)
         try:
-            tiny_url = subprocess.check_output(["curl","http://tinyurl.com/api-create.php?url="+str(auth_uri)+ "'"])
-            answer.send_message(tiny_url.decode("utf-8"),self.userId)
-            answer.send_message("Psst, its a tiny URL, dont freakout, its Google behind",self.userId)
+            if self.isTinyURL:
+                self.ask_tiny_url(auth_uri)
         except Exception as e:
-            print(e)
-            print("\n")
-            answer.send_message(auth_uri,self.userId)
+                self.isTinyURL = False
+        if not self.isTinyURL:
+            self.ask_auth_uri(auth_uri)
+
         return
     def verify_credentials(self,code):
         credentials = self.user_state.flow.step2_exchange(code)
@@ -139,3 +140,11 @@ class User_manager():
         storage.put(credentials)
         mm=Musicmanager()
         mm.login(oauth_credentials = self.folder_path+"oauth.cred")
+    
+    def ask_auth_uri(self, auth_uri):
+        answer.send_message(auth_uri,self.userId)
+
+    def ask_tiny_url(self,tiny_url):
+        tiny_url = subprocess.check_output(["curl","http://tinyurl.com/api-create.php?url="+str(auth_uri)+ "'"])
+        answer.send_message(tiny_url.decode("utf-8"),self.userId)
+        answer.send_message("Psst, its a tiny URL, dont freakout, its Google behind",self.userId)
