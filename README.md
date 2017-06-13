@@ -17,12 +17,12 @@ Add some direct interaction at low level (get status, erase, help)
 
 # Evolution:
 Do FSM and dispatcher to FSM concerned if they wait this type of event, check if somebody care after
-modularize in order to unit test
-abstract input
+Modularize in order to unit testing
+Abstract input
 Add other chatbots possibility (telegram/Http ? / sms? )
-See a way to monetize if growth
-Analyze seen from FB in order to be more natural with timeou
-~~IOS in a way or other ? ~~ Google play music supported
+~~See a way to monetize if growth~~ => Youtube TOS for example
+Analyze seen from FB in order to be more natural with timeout
+~~IOS in a way or other ?~~ => Google play music supported
 Do some check regurlarly about youtube-dl (can break often) and update accordingly
 
 
