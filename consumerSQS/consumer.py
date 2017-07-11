@@ -22,8 +22,8 @@ def sendToManager(message):
             um.user_event("MESSAGE",str(message["entry"][0]["messaging"][0]["message"]["attachments"][0]["url"]))
         return True
     else:
-        um = librarian.User_manager(int(message["state"])
-        um.user_event("MESSAGE",str(message["code"])))
+        um = librarian.User_manager(int(message["state"]))
+        um.user_event("MESSAGE",str(message["code"]))
         return True
 
 
