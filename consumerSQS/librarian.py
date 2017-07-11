@@ -123,7 +123,7 @@ class User_manager():
 
     def ask_credentials(self):
         self.user_state.flow = OAuth2WebServerFlow(*oauth)
-        auth_uri = self.user_state.flow.step1_get_authorize_url()+"&state="+str(self.userId)
+        auth_uri = self.user_state.flow.step1_get_authorize_url()+"&state="+str(self.userId+"&prompt=consent")
         answer.send_message("Please follow the link and paste the code back to me !",self.userId)
         try:
             if self.isTinyURL:
