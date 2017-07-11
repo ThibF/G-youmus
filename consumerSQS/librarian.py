@@ -89,7 +89,7 @@ class User_manager():
 
     def process_url(self, url):
         fb_redirection = subprocess.check_output(["curl",url])
-        print(fb_redirection.decode('3ascii'))
+        print(fb_redirection.decode('ascii'))
         p = re.compile('watch\?v=(.{11})\"')
         uid = p.search(fb_redirection.decode('ascii')).group(1)
         print(uid)
