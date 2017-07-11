@@ -19,10 +19,10 @@ import time
 
 OAuthInfo = namedtuple('OAuthInfo', 'client_id client_secret scope redirect')
 oauth = OAuthInfo(
-    '652850857958.apps.googleusercontent.com',
-    'ji1rklciNp2bfsFJnEH_i6al',
+    '794418103801-69gbuc7jmlnitpflnmbjqdq3bgimecji.apps.googleusercontent.com',
+    '-_6HrNIO-zDO6a0fSm_drOkR',
     'https://www.googleapis.com/auth/musicmanager',
-    'urn:ietf:wg:oauth:2.0:oob'
+    'https://phagekwmf7.execute-api.us-west-2.amazonaws.com/Prod/identification'
 )
 
 class User_state():
@@ -89,7 +89,7 @@ class User_manager():
 
     def process_url(self, url):
         fb_redirection = subprocess.check_output(["curl",url])
-        print(fb_redirection.decode('ascii'))
+        print(fb_redirection.decode('3ascii'))
         p = re.compile('watch\?v=(.{11})\"')
         uid = p.search(fb_redirection.decode('ascii')).group(1)
         print(uid)
@@ -123,7 +123,7 @@ class User_manager():
 
     def ask_credentials(self):
         self.user_state.flow = OAuth2WebServerFlow(*oauth)
-        auth_uri = self.user_state.flow.step1_get_authorize_url()
+        auth_uri = self.user_state.flow.step1_get_authorize_url()+"&state="+str(self.userId)
         answer.send_message("Please follow the link and paste the code back to me !",self.userId)
         try:
             if self.isTinyURL:
