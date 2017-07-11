@@ -47,8 +47,8 @@ while True:
             print("Received ="+str(json.loads(msg.body)))
             status = work(json.loads(msg.body))
             msg.delete()
-        except:
-            pass
+        except Exception as e:
+            print(e)
     time.sleep(0.2)
 
 
