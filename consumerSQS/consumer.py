@@ -44,6 +44,7 @@ while True:
     queue = sqs.get_queue_by_name(QueueName='MessagesYouMus.fifo')
     for msg in queue.receive_messages():
         try:
+            print("Received ="+str(json.loads(msg.body)))
             status = work(json.loads(msg.body))
             msg.delete()
         except:
