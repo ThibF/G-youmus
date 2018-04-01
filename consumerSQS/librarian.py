@@ -15,7 +15,8 @@ import urllib
 import pickle
 import re
 import time
-
+import logging
+import traceback
 
 OAuthInfo = namedtuple('OAuthInfo', 'client_id client_secret scope redirect')
 oauth = OAuthInfo(
@@ -34,6 +35,7 @@ class User_state():
         self.count = 0
         self.creationTimestamp = time.time()
         self.lastInteractionTimestamp = time.time() 
+
 class User_manager():
 
     isTinyURL = False
@@ -50,9 +52,9 @@ class User_manager():
             try:
                 self.user_state = self.reconstruct_user_state(self.userId)
             except Exception as e:
-                print("USER NOT FOUND, SHOULD NOT HAPPEN")
-                print("Recover to be done")
+                logging.warning("USER NOT FOUND, SHOULD NOT HAPPEN, reinit of all data")
                 self.user_state = User_state(userId)
+
     def build_user_file(self,user_state):
         user_state.lastInteractionTimestamp = time.time() 
         pickle.dump(user_state, open(self.folder_path+"state.p","wb"))
@@ -60,17 +62,16 @@ class User_manager():
     def reconstruct_user_state(self,userId):
         user_state = pickle.load(open(self.folder_path+"state.p", 'rb'))
         if not hasattr(user_state, 'count'):
-            user_state.count = 0 
-
+            user_state.count = 0
         return user_state
 
     def user_event(self,event,payload):
-
+        logging.debug(self.userId+"| "+str(event)+"|"+str(payload))
         try:
-            if self.user_state.state is None:
+            if self.user_state.state is None and "MESSAGE" in event:
                 self.ask_credentials()
                 self.user_state.state = "CREDENTIALS WAITING"
-            elif "CREDENTIALS WAITING" in self.user_state.state :
+            elif "CREDENTIALS WAITING" in self.user_state.state and "IDENTIFICATION" in event :
                 self.verify_credentials(payload)
                 answer.send_message("Hey everything is setup !",self.userId)
                 self.user_state.state = "SET UP COMPLETED"
@@ -80,7 +81,8 @@ class User_manager():
                 answer.send_message("Hey niceJob !!",self.userId)
             self.build_user_file(self.user_state)
         except Exception as e:
-            print(e)
+            logging.error(e)
+            logging.error(traceback.format_exc())
             answer.send_message("Outch !",self.userId)
             answer.send_message("Something gone wrong",self.userId)
             answer.send_message("I will keep you informed",self.userId)
@@ -88,14 +90,16 @@ class User_manager():
             self.build_user_file(self.user_state)
 
     def process_url(self, url):
-        fb_redirection = subprocess.check_output(["curl",url])
-        print(fb_redirection.decode('ascii'))
-        p = re.compile('watch\?v=(.{11})\"')
-        uid = p.search(fb_redirection.decode('ascii')).group(1)
-        print(uid)
+        if "l.facebook.com" in  url:
+            fb_redirection = subprocess.check_output(["curl",url])
+            p = re.compile('watch\?v=(.{11})\"')
+            uid = p.search(fb_redirection.decode('ascii')).group(1)
+        else:
+            uid= url
         command=["youtube-dl"]
         command.append("--add-metadata")
         command.append("--extract-audio")
+        command.append("--no-playlist")
         command.append("--audio-format")
         command.append("mp3")
         command.append("-o")
@@ -108,14 +112,14 @@ class User_manager():
                 mm=Musicmanager()
                 mm.login(oauth_credentials = self.folder_path+"oauth.cred")
                 code=mm.upload(music)
-                print(code)
+                logging.info("value return after upload by gmusic")
                 if len(code[0])==1:
                     try:
                         os.remove(music)
                     except OSError:
                         pass
             except TypeError as e:
-                print(e)
+                logging.error(e)
                 try:
                     mm.login()
                 except gmusicapi.exceptions.AlreadyLoggedIn as e:
@@ -138,6 +142,7 @@ class User_manager():
         credentials = self.user_state.flow.step2_exchange(code)
         storage = oauth2client.file.Storage(self.folder_path+"oauth.cred")
         storage.put(credentials)
+        time.sleep(20)
         mm=Musicmanager()
         mm.login(oauth_credentials = self.folder_path+"oauth.cred")
     
