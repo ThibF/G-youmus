@@ -17,6 +17,7 @@ import re
 import time
 import logging
 import traceback
+import youtube_dl
 
 OAuthInfo = namedtuple('OAuthInfo', 'client_id client_secret scope redirect')
 oauth = OAuthInfo(
@@ -25,6 +26,20 @@ oauth = OAuthInfo(
     'https://www.googleapis.com/auth/musicmanager',
     'https://phagekwmf7.execute-api.us-west-2.amazonaws.com/Prod/identification'
 )
+
+ydl_opts_download = {
+    'format': 'bestaudio/best',
+    'postprocessors': [{'key': 'FFmpegMetadata'},
+    {
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'mp3',
+    }],
+    'addmetadata':True,
+    'verbose':True,
+}
+ydl_opts_title = {
+    'simulate':True,
+}
 
 class User_state():
     def __init__(self,userId):
@@ -45,6 +60,7 @@ class User_manager():
     def __init__(self,userId):
         self.userId = userId
         self.folder_path = config["library_path"]+str(userId)+"/"
+        ydl_opts_download["outtmpl"]= self.folder_path+"%(title)s.%(ext)s"
         try:
             os.mkdir(self.folder_path)
             self.user_state = User_state(userId)
@@ -59,6 +75,7 @@ class User_manager():
         user_state.lastInteractionTimestamp = time.time() 
         pickle.dump(user_state, open(self.folder_path+"state.p","wb"))
         return True
+
     def reconstruct_user_state(self,userId):
         user_state = pickle.load(open(self.folder_path+"state.p", 'rb'))
         if not hasattr(user_state, 'count'):
@@ -67,6 +84,9 @@ class User_manager():
 
     def user_event(self,event,payload):
         logging.debug(self.userId+"| "+str(event)+"|"+str(payload))
+        if "reset" in payload :
+            self.user_state.state = None
+            self.build_user_file(self.user_state)
         try:
             if self.user_state.state is None and "MESSAGE" in event:
                 self.ask_credentials()
@@ -76,9 +96,13 @@ class User_manager():
                 answer.send_message("Hey everything is setup !",self.userId)
                 self.user_state.state = "SET UP COMPLETED"
             elif "SET UP COMPLETED" in self.user_state.state :
-                self.process_url(payload)
-                self.user_state.count += 1
-                answer.send_message("Hey niceJob !!",self.userId)
+                if not self.is_a_correct_url(payload):
+                    answer.send_message("Hum, I dont understand",self.userId)
+                else :
+                    logging.info("Url understood")
+                    self.process_url(payload)
+                    self.user_state.count += 1
+                    answer.send_message("Hey niceJob !!",self.userId)
             self.build_user_file(self.user_state)
         except Exception as e:
             logging.error(e)
@@ -86,8 +110,19 @@ class User_manager():
             answer.send_message("Outch !",self.userId)
             answer.send_message("Something gone wrong",self.userId)
             answer.send_message("I will keep you informed",self.userId)
-            self.user_state.state = None
-            self.build_user_file(self.user_state)
+
+    def is_a_correct_url(self,url):
+        if "l.facebook.com" in  url:
+            fb_redirection = subprocess.check_output(["curl",url])
+            p = re.compile('watch\?v=(.{11})\"')
+            uid = p.search(fb_redirection.decode('ascii')).group(1)
+        else:
+            uid= url
+        try:
+            info = youtube_dl.YoutubeDL(ydl_opts_title).extract_info(uid)
+            return True
+        except youtube_dl.DownloadError as e:
+            return False
 
     def process_url(self, url):
         if "l.facebook.com" in  url:
@@ -96,21 +131,12 @@ class User_manager():
             uid = p.search(fb_redirection.decode('ascii')).group(1)
         else:
             uid= url
-        command=["youtube-dl"]
-        command.append("--add-metadata")
-        command.append("--extract-audio")
-        command.append("--no-playlist")
-        command.append("--audio-format")
-        command.append("mp3")
-        command.append("-o")
-        command.append(self.folder_path+"/%(title)s.%(ext)s")
-        command.append(uid)
-        subprocess.check_call(command)
+        youtube_dl.YoutubeDL(ydl_opts_download).download([uid])
         files=glob.glob(self.folder_path+"/*.mp3")
         for music in files:
             try:
                 mm=Musicmanager()
-                mm.login(oauth_credentials = self.folder_path+"oauth.cred")
+                mm.login(oauth_credentials = self.folder_path+"oauth.cred", uploader_id='02:42:3D:5B:ED:7B')
                 code=mm.upload(music)
                 logging.info("value return after upload by gmusic")
                 if len(code[0])==1:
