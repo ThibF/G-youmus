@@ -15,8 +15,8 @@ logging.info("Waiting for message")
 while True:
     queue = sqs.get_queue_by_name(QueueName='MessagesYouMus.fifo')
     for msg in queue.receive_messages():
-        msg_wrapper = MessageFacebook(msg.body)
-        logging.debug("\nReceived ="+msg_wrapper.get_text())
+        msg_wrapper = messageFacebook.MessageFacebook(msg.body)
+        logging.debug("\nReceived ="+str(msg_wrapper.body))
         status = consumer.work(msg_wrapper)
         logging.debug("code returned by work:"+str(status))
         msg.delete()

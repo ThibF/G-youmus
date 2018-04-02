@@ -7,6 +7,6 @@ RUN apt-get install -qqy python3-pip
 RUN pip3 install gmusicapi youtube-dl
 RUN pip3 install boto3
 
-CMD ["python3", "/src/bin/consumerSQS/consumer.py"]
+CMD ["python3", "/src/bin/consumerSQS/main.py"]
 
 
