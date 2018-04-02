@@ -5,6 +5,9 @@ import answer
 import json
 import time
 import librarian
+import messageGoogle
+import messageFacebook
+
 
 def work(message):
     return sendToManager(message)
@@ -12,15 +15,15 @@ def work(message):
 def sendToManager(message):
     logging.debug("Manager received:"+str(message))
     
-    try:
+    if type(message) == messageFacebook.MessageFacebook :
         um = librarian.User_manager(message.get_sender_id())
         try:
             um.user_event("MESSAGE",message.get_text())
         except Exception as e:
             print(e)
             um.user_event("MESSAGE",message.get_url())
-    except KeyError as e:
-        um = librarian.User_manager(message.get_state())
+    else:
+        um = librarian.User_manager(message.get_sender_id())
         um.user_event("IDENTIFICATION",message.get_code())
     return True
 
@@ -35,7 +38,6 @@ def parrot_work(message):
     except Exception as e:
         print(e)
         return False
-
 
 
 

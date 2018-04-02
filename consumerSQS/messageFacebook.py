@@ -1,7 +1,8 @@
 import json
 import re
+import message
 
-class MessageFacebook:
+class MessageFacebook(message.Message):
     def __init__(self,body):
         self.body = json.loads(body)
         if type(self.body) == str :
@@ -26,7 +27,3 @@ class MessageFacebook:
         if len(url)<1:
             raise AttributeError
         return url
-    def get_code(self):
-        return self.body["code"]
-    def get_state(self):
-        return self.body["state"]
