@@ -120,7 +120,9 @@ class User_manager():
             uid= url
         try:
             info = youtube_dl.YoutubeDL(ydl_opts_title).extract_info(uid)
-            return True
+            if info["duration"] < 600 :
+                return True
+            return False
         except youtube_dl.DownloadError as e:
             return False
 
