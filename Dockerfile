@@ -4,7 +4,10 @@ RUN apt-get update
 RUN apt-get install -qqy ffmpeg
 RUN apt-get install -qqy curl
 RUN apt-get install -qqy python3-pip
-RUN pip3 install gmusicapi youtube-dl
+RUN apt install -qqy libxslt-dev libxml2-dev
+RUN pip3 install -U setuptools
+RUN pip3 install gmusicapi
+RUN pip3 install youtube-dl
 RUN pip3 install boto3
 RUN apt-get install -qqy locales
 
