@@ -43,7 +43,7 @@ logging.info("Waiting for message")
 while True:
     queue = sqs.get_queue_by_name(QueueName='MessagesYouMus.fifo')
     for msg in queue.receive_messages():
-        logging.getLogger().setLevel(level=logging.DEBUG)
+        logging.getLogger().setLevel(level=logging.INFO)
         logging.debug("Received ="+str(msg.body))
         source = isPayloadFrom(msg.body)
         try:

@@ -172,7 +172,7 @@ class User_manager():
         storage.put(credentials)
         time.sleep(20)
         mm=Musicmanager()
-        mm.login(oauth_credentials = self.folder_path+"oauth.cred")
+        mm.login(oauth_credentials = self.folder_path+"oauth.cred",uploader_id='3c:f8:62:67:01:0b')
     
     def ask_auth_uri(self, auth_uri):
         answer.send_message(auth_uri,self.userId)
