@@ -1,10 +1,6 @@
 FROM debian:latest
 
-RUN apt-get update
-RUN apt-get install -qqy ffmpeg
-RUN apt-get install -qqy curl
-RUN apt-get install -qqy python3-pip
-RUN apt install -qqy libxslt-dev libxml2-dev
+RUN apt-get update && apt-get -y upgrade && apt-get install -y ffmpeg curl python3-pip libxslt-dev libxml2-dev
 RUN pip3 install -U setuptools
 RUN pip3 install gmusicapi
 RUN pip3 install youtube-dl
