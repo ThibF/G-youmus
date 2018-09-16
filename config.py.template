@@ -3,4 +3,7 @@ config = {
 	"access_key" : "",
 	"secret_access_key" : "",
         "library_path": ""
+        "region_name":"",
+        "endpoint_url":"",
+        "QueueName":""
 }
