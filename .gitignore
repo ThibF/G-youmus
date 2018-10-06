@@ -1,7 +1,3 @@
-# Project ignore
-*oauth.cred
-*state.p
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -91,3 +87,8 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Project ignore
+oauth.cred
+state.p
+
