@@ -1,8 +1,13 @@
 import glob
+import os
 import re
+import shutil
 import subprocess
 from config import config
 import youtube_dl as youtube_dl
+import uuid
+import fnmatch
+from pathlib import Path
 
 ydl_opts_download = {
     'format': 'bestaudio/best',
@@ -36,7 +41,8 @@ class Downloader:
                 for music in info['entries']:
                     if music["duration"] > 600:
                         return False
-                return True
+                    # TODO Support playlist correctly : see metadata hell
+                return False
             elif info["duration"] < 600:
                 return True
             return False
@@ -71,7 +77,7 @@ class Downloader:
         else:
             return information["uploader"]
 
-    def process_metadata(self, fullInformation):
+    def process_metadata(self, fullInformation, folderpath):
         if "_type" in fullInformation and fullInformation["_type"] == "playlist":
             for entrie in fullInformation["entries"]:
                 artist = self.choose_artist(entrie)
@@ -79,8 +85,10 @@ class Downloader:
                     self.add_metadata(config["library_path"] + "/" + str(entrie["title"]) + ".mp3", artist)
         else:
             artist = self.choose_artist(fullInformation)
+            filename = fnmatch.filter(os.listdir(folderpath), "*.mp3")[0]
+            filepath = folderpath + "/" + filename
             if artist is not None:
-                self.add_metadata(config["library_path"] + "/" + str(fullInformation["title"]) + ".mp3", artist)
+                self.add_metadata(filepath, artist)
 
     def is_title_with_artist(self, title):
         return False
@@ -92,9 +100,18 @@ class Downloader:
             uid = p.search(fb_redirection.decode('ascii')).group(1)
         else:
             uid = url
-        ydl_opts_download['outtmpl'] = config["library_path"] + "/" + '%(title)s.%(ext)s'
+        foldername = str(uuid.uuid4())
+        folderpath = config["library_path"] + "/" + foldername
+        if not os.path.exists(folderpath):
+            os.makedirs(folderpath)
+        ydl_opts_download['outtmpl'] = folderpath + "/" + '%(title)s.%(ext)s'
         fullInformation = youtube_dl.YoutubeDL(ydl_opts_title).extract_info(uid)
         youtube_dl.YoutubeDL(ydl_opts_download).download([uid])
-        files = glob.glob(config["library_path"] + "/*.mp3")
-        self.process_metadata(fullInformation)
+        files = fnmatch.filter(os.listdir(folderpath), "*.mp3")
+        files = [folderpath + "/" + file for file in files]
+        self.process_metadata(fullInformation, folderpath)
         return files
+
+    def clean(self, files):
+        folderToRemove = Path(files[0]).parent
+        shutil.rmtree(str(folderToRemove))

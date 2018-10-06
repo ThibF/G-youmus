@@ -22,5 +22,6 @@ class MediaManager:
 
         self.uploader.upload(downloads, user_state)
         logging.info("All files ("+str(len(downloads))+") are uploaded:"+str(downloads))
+        self.downloader.clean(downloads)
 
 

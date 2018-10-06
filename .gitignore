@@ -91,4 +91,5 @@ ENV/
 # Project ignore
 oauth.cred
 state.p
-
+config.py
+.idea/
